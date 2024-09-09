@@ -1,24 +1,20 @@
 # ip-management
 
-## Project setup
+使用中の ip アドレスを管理する
+
+## セットアップ
+
 ```
 npm install
+pip install sqlite3 flask flask_cors flask_sqlalchemy
 ```
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+### 実行
 
-### Compiles and minifies for production
 ```
+vue add vuetify
+# vue3: vue cliを選択
+
 npm run build
+python3 app.py
 ```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
