@@ -6,7 +6,7 @@
 
 ```
 npm install
-pip install sqlite3 flask flask_cors flask_sqlalchemy
+pip install flask flask_cors flask_sqlalchemy
 ```
 
 ### 実行
