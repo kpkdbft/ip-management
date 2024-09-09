@@ -17,4 +17,5 @@ vue add vuetify
 
 npm run build
 python3 app.py
+python3 setup.py
 ```
