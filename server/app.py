@@ -1,157 +1,126 @@
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
+from typing import Annotated, List
+from pydantic import BaseModel
+
+
+from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.staticfiles import StaticFiles
+
+from contextlib import asynccontextmanager
+from sqlmodel import Field, Session, SQLModel, create_engine, select
+
 import os
 
-app = Flask(__name__)
-CORS(app)
+
+class IPAddress(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    ip: str = Field(index=True)
+    hostname: str | None = Field(default=None, index=True)
+    purpose: str | None = Field(default=None, index=True)
+    device_type: str | None = Field(default=None, index=True)
+    admin: str | None = Field(default=None, index=True)
+    status: bool | None = Field(default=None, index=True)
+
+
+class Admin(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    name: str | None = Field(default=None, index=True)
+    grade: str | None = Field(default=None, index=True)
+
+
+class AliveServers(BaseModel):
+    ping: List[str]
+
+
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
+
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+
+
+def update_ip(ip: IPAddress, ip_update: IPAddress):
+    ip.ip = ip_update.ip
+    ip.hostname = ip_update.hostname
+    ip.purpose = ip_update.purpose
+    ip.device_type = ip_update.device_type
+    ip.admin = ip_update.admin
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 # SQLiteデータベースの設定
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
-    basedir, "ip_management.db"
-)
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+sqlite_url = "sqlite:///" + os.path.join(basedir, "ip_management.db")
+engine = create_engine(sqlite_url)
 
-db = SQLAlchemy(app)
+SessionDep = Annotated[Session, Depends(get_session)]
 
 
-class IPAddress(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    ip = db.Column(db.String(15), nullable=False, unique=True)
-    hostname = db.Column(db.String(255), nullable=True)
-    purpose = db.Column(db.String(255), nullable=True)
-    device_type = db.Column(db.String(255), nullable=True)
-    admin = db.Column(db.String(255), nullable=True)
-    status = db.Column(db.Boolean, nullable=True)
+@app.post("/api/ip-addresses")
+def create_ip_address(ip: IPAddress, session: SessionDep):
+    session.add(ip)
+    session.commit()
+    session.refresh(ip)
+    return ip
 
 
-class Admin(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
-    grade = db.Column(db.String(255), nullable=False)
+@app.put("/api/ip-addresses")
+def change_ip_address(ip_update: IPAddress, session: SessionDep):
+    statement = select(IPAddress).where(IPAddress.ip == ip_update.ip)
+    ip = session.exec(statement).one()
+    if not ip:
+        raise HTTPException(status_code=404, detail="ip_address not found")
+    update_ip(ip, ip_update)
+    session.add(ip)
+    session.commit()
+    session.refresh(ip)
 
 
-def ipUpdate(ip: IPAddress, new_ip: IPAddress):
-    ip.ip = new_ip.ip
-    ip.hostname = new_ip.hostname
-    ip.purpose = new_ip.purpose
-    ip.device_type = new_ip.device_type
-    ip.admin = new_ip.admin
+@app.get("/api/ip-addresses")
+def get_ip_addresses(session: SessionDep):
+    ip_addresses = session.exec(select(IPAddress)).all()
+    return ip_addresses
 
 
-# データベースの初期化
-with app.app_context():
-    db.create_all()
+@app.delete("/api/ip-addresses")
+def delete_ip_address(ip: IPAddress, session: SessionDep):
+    ip = session.get(IPAddress, ip.id)
+    if ip is None:
+        raise HTTPException(status_code=404, detail="ip_address not found")
+    session.delete(ip)
+    session.commit()
+    return {"message": "IP address deleted successfully"}
 
 
-@app.route("/api/ip-addresses", methods=["POST"])
-def add_ip_address():
-    data = request.get_json()
-    new_ip = IPAddress(
-        ip=data["ip"],
-        hostname=data["hostname"],
-        purpose=data["purpose"],
-        device_type=data["device_type"],
-        admin=data["admin"],
-    )
-    db.session.add(new_ip)
-    db.session.commit()
-    return jsonify({"message": "IP address added successfully", "data": data}), 201
+@app.get("/api/admins")
+def get_admins(session: SessionDep):
+    admins = session.exec(select(Admin)).all()
+    return admins
 
 
-@app.route("/api/ip-addresses", methods=["PUT"])
-def change_ip_address():
-    data = request.get_json()
-    new_ip = IPAddress(
-        ip=data["ip"],
-        hostname=data["hostname"],
-        purpose=data["purpose"],
-        device_type=data["device_type"],
-        admin=data["admin"],
-    )
-    ip = db.session.query(IPAddress).where(IPAddress.ip == new_ip.ip).first()
-    if ip:
-        ipUpdate(ip, new_ip)
-        db.session.commit()
-        return (
-            jsonify({"message": "IP address changed successfully", "data": data}),
-            201,
-        )
-    else:
-        return jsonify({"message": "IP not found", "data": data}), 404
-
-
-@app.route("/api/ip-addresses", methods=["GET"])
-def get_ip_addresses():
-    ip_addresses = IPAddress.query.all()
-    result = [
-        {
-            "id": ip.id,
-            "ip": ip.ip,
-            "hostname": ip.hostname,
-            "purpose": ip.purpose,
-            "device_type": ip.device_type,
-            "admin": ip.admin,
-            "status": ip.status,
-        }
-        for ip in ip_addresses
-    ]
-    return jsonify(result)
-
-
-@app.route("/api/ip-addresses", methods=["DELETE"])
-def delete_ip_address():
-    data = request.get_json()
-    ipId = data["id"]
-
-    if (db.session.get(IPAddress, ipId)) is None:
-        return jsonify({"message": "IP address not found"}), 404
-    db.session.query(IPAddress).filter(IPAddress.id == ipId).delete()
-    db.session.commit()
-    return jsonify({"message": "IP address deleted successfully"}), 200
-
-
-@app.route("/api/admins", methods=["GET"])
-def get_admins():
-    admins = Admin.query.all()
-    result = [
-        {"id": admin.id, "name": admin.name, "grade": admin.grade} for admin in admins
-    ]
-    return jsonify(result)
-
-
-@app.route("/api/zabbix", methods=["POST"])
-def updateState():
-    data = request.get_json()
-    pingLists = data["ping"]
-    ipAddresses = IPAddress.query.all()
-    for ipAddress in ipAddresses:
-        if ipAddress.ip in pingLists:
-            ipAddress.status = True
-            pingLists.remove(ipAddress.ip)
+@app.post("/api/zabbix")
+def updateState(alive_servers: AliveServers, session: SessionDep):
+    ip_addresses = session.exec(select(IPAddress)).all()
+    for ip in ip_addresses:
+        if ip.ip in alive_servers.ping:
+            ip.status = True
+            alive_servers.ping.remove(ip.ip)
         else:
-            ipAddress.status = False
+            ip.status = False
 
-    for aliveIp in pingLists:
-        new_ip = IPAddress(ip=aliveIp, status=True)
-        db.session.add(new_ip)
-    db.session.commit()
-    return (
-        jsonify({"message": "Machine state changed successfully", "data": data}),
-        201,
-    )
+    for alive_server in alive_servers.ping:
+        ip = IPAddress(ip=alive_server, status=True)
+        session.add(ip)
+    session.commit()
+    return {"message": "Machine state changed successfully", "data": ip_addresses}
 
 
-@app.route("/")
-def index():
-    return send_from_directory("../dist", "index.html")
-
-
-@app.route("/<path:path>")
-def static_proxy(path):
-    return send_from_directory("../dist", path)
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)  # FlaskアプリをWaitressで稼働させる
+app.mount("/", StaticFiles(directory="../dist", html=True), name="static")
