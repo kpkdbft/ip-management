@@ -145,12 +145,12 @@ def updateState():
 
 @app.route("/")
 def index():
-    return send_from_directory("dist", "index.html")
+    return send_from_directory("../dist", "index.html")
 
 
 @app.route("/<path:path>")
 def static_proxy(path):
-    return send_from_directory("dist", path)
+    return send_from_directory("../dist", path)
 
 
 if __name__ == "__main__":
