@@ -21,6 +21,11 @@ class IPAddress(SQLModel, table=True):
     status: bool | None = Field(default=None, index=True)
 
 
+class Message(BaseModel):
+    message: str
+    data: List[IPAddress]
+
+
 class Admin(SQLModel, table=True):
     id: int = Field(primary_key=True)
     name: str | None = Field(default=None, index=True)
@@ -64,7 +69,7 @@ engine = create_engine(sqlite_url)
 SessionDep = Annotated[Session, Depends(get_session)]
 
 
-@app.post("/api/ip-addresses")
+@app.post("/api/ip-addresses", response_model=IPAddress)
 def create_ip_address(ip: IPAddress, session: SessionDep):
     session.add(ip)
     session.commit()
@@ -72,7 +77,7 @@ def create_ip_address(ip: IPAddress, session: SessionDep):
     return ip
 
 
-@app.put("/api/ip-addresses")
+@app.put("/api/ip-addresses", response_model=IPAddress)
 def change_ip_address(ip_update: IPAddress, session: SessionDep):
     statement = select(IPAddress).where(IPAddress.ip == ip_update.ip)
     ip = session.exec(statement).one()
@@ -82,9 +87,10 @@ def change_ip_address(ip_update: IPAddress, session: SessionDep):
     session.add(ip)
     session.commit()
     session.refresh(ip)
+    return ip
 
 
-@app.get("/api/ip-addresses")
+@app.get("/api/ip-addresses", response_model=List[IPAddress])
 def get_ip_addresses(session: SessionDep):
     ip_addresses = session.exec(select(IPAddress)).all()
     return ip_addresses
@@ -100,13 +106,13 @@ def delete_ip_address(ip: IPAddress, session: SessionDep):
     return {"message": "IP address deleted successfully"}
 
 
-@app.get("/api/admins")
+@app.get("/api/admins", response_model=List[Admin])
 def get_admins(session: SessionDep):
     admins = session.exec(select(Admin)).all()
     return admins
 
 
-@app.post("/api/zabbix")
+@app.post("/api/zabbix", response_model=Message)
 def updateState(alive_servers: AliveServers, session: SessionDep):
     ip_addresses = session.exec(select(IPAddress)).all()
     for ip in ip_addresses:
@@ -120,7 +126,7 @@ def updateState(alive_servers: AliveServers, session: SessionDep):
         ip = IPAddress(ip=alive_server, status=True)
         session.add(ip)
     session.commit()
-    return {"message": "Machine state changed successfully", "data": ip_addresses}
+    return Message(message="Machine state changed successfully", data=ip_addresses)
 
 
 app.mount("/", StaticFiles(directory="../dist", html=True), name="static")
