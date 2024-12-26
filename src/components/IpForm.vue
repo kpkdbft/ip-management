@@ -41,6 +41,7 @@
             <v-data-table :headers="ipHeaders" :items="ipAddresses" class="elevation-1 mt-5">
                 <template v-slot:top>
                     <v-toolbar>
+                        <v-toolbar-title>Zone-Cの端末</v-toolbar-title>
                         <v-spacer></v-spacer>
                         <v-btn class="mb-2 bg-primary white" @click="handleEdit">
                             新規登録
