@@ -1,10 +1,7 @@
 <template>
     <v-container>
         <v-card class="mx-auto my-5 pa-5" max-width="1000px">
-            <v-card-title class="text-h5">新規作成</v-card-title>
-            <v-btn class="mb-2" color="primary" @click="handleEdit">
-                New Item
-            </v-btn>
+            <v-card-title class="text-h5">アドレス管理 </v-card-title>
             <v-dialog v-model="dialog" max-width="800px">
                 <v-card>
                     <v-card-title>
@@ -42,6 +39,14 @@
                 </v-card>
             </v-dialog>
             <v-data-table :headers="ipHeaders" :items="ipAddresses" class="elevation-1 mt-5">
+                <template v-slot:top>
+                    <v-toolbar>
+                        <v-spacer></v-spacer>
+                        <v-btn class="mb-2 bg-primary white" @click="handleEdit">
+                            新規登録
+                        </v-btn>
+                    </v-toolbar>
+                </template>
                 <template v-slot:[`item.status`]="{ item }">
                     <v-chip :color="getColor(item.status)">
                         {{ statusTxt(item.status) }}
