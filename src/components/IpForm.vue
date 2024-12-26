@@ -11,50 +11,20 @@
                         <span class="text-h5">{{ formTitle }}</span>
                     </v-card-title>
 
-                    <v-text-field
-                        v-model="sendData.ip"
-                        label="IPアドレス"
-                        :error-messages="ipError"
-                        placeholder="192.168.1.1"
-                    ></v-text-field>
-                    <v-text-field
-                        v-model="sendData.hostname"
-                        label="ホスト名"
-                        placeholder="www.example.com"
-                    ></v-text-field>
-                    <v-select
-                        v-model="sendData.device_type"
-                        :items="locations"
-                        label="機器種"
-                    ></v-select>
-                    <v-text-field
-                        v-model="sendData.purpose"
-                        label="用途"
-                        placeholder="実験用"
-                    ></v-text-field>
-                    <v-select
-                        v-model="sendData.admin"
-                        :items="admins"
-                        item-title="name"
-                        :item-props="adminProps"
-                        label="管理者"
-                        :error-messages="adminError"
-                    ></v-select>
+                    <v-text-field v-model="sendData.ip" label="IPアドレス" :error-messages="ipError"
+                        placeholder="192.168.1.1"></v-text-field>
+                    <v-text-field v-model="sendData.hostname" label="ホスト名" placeholder="www.example.com"></v-text-field>
+                    <v-select v-model="sendData.device_type" :items="locations" label="機器種"></v-select>
+                    <v-text-field v-model="sendData.purpose" label="用途" placeholder="実験用"></v-text-field>
+                    <v-select v-model="sendData.admin" :items="admins" item-title="name" :item-props="adminProps"
+                        label="管理者" :error-messages="adminError"></v-select>
 
                     <v-card-actions>
                         <v-spacer></v-spacer>
-                        <v-btn
-                            color="blue-darken-1"
-                            variant="text"
-                            @click="close"
-                        >
+                        <v-btn color="blue-darken-1" variant="text" @click="close">
                             Cancel
                         </v-btn>
-                        <v-btn
-                            color="blue-darken-1"
-                            variant="text"
-                            @click="handleSubmit"
-                        >
+                        <v-btn color="blue-darken-1" variant="text" @click="handleSubmit">
                             Submit
                         </v-btn>
                     </v-card-actions>
@@ -62,32 +32,16 @@
             </v-dialog>
             <v-dialog v-model="dialogDelete" max-width="500px">
                 <v-card>
-                    <v-card-title class="text-h5"
-                        >本当に削除しますか?</v-card-title
-                    >
+                    <v-card-title class="text-h5">本当に削除しますか?</v-card-title>
                     <v-card-actions>
                         <v-spacer></v-spacer>
-                        <v-btn
-                            color="blue-darken-1"
-                            variant="text"
-                            @click="closeDelete"
-                            >Cancel</v-btn
-                        >
-                        <v-btn
-                            color="blue-darken-1"
-                            variant="text"
-                            @click="deleteItemConfirm"
-                            >OK</v-btn
-                        >
+                        <v-btn color="blue-darken-1" variant="text" @click="closeDelete">Cancel</v-btn>
+                        <v-btn color="blue-darken-1" variant="text" @click="deleteItemConfirm">OK</v-btn>
                         <v-spacer></v-spacer>
                     </v-card-actions>
                 </v-card>
             </v-dialog>
-            <v-data-table
-                :headers="ipHeaders"
-                :items="ipAddresses"
-                class="elevation-1 mt-5"
-            >
+            <v-data-table :headers="ipHeaders" :items="ipAddresses" class="elevation-1 mt-5">
                 <template v-slot:[`item.status`]="{ item }">
                     <v-chip :color="getColor(item.status)">
                         {{ statusTxt(item.status) }}
@@ -97,11 +51,7 @@
                     <v-icon class="me-2" size="small" @click="handleEdit(item)">
                         mdi-pencil
                     </v-icon>
-                    <v-icon
-                        class="me-2"
-                        size="small"
-                        @click="handleDelete(item.id)"
-                    >
+                    <v-icon class="me-2" size="small" @click="handleDelete(item.id)">
                         mdi-delete
                     </v-icon>
                 </template>
