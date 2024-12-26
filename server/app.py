@@ -71,6 +71,11 @@ SessionDep = Annotated[Session, Depends(get_session)]
 
 @app.post("/api/ip-addresses", response_model=IPAddress)
 def create_ip_address(ip: IPAddress, session: SessionDep):
+    statement = select(IPAddress).where(IPAddress.ip == ip.ip)
+    ip_exist = session.exec(statement).all()
+    if ip_exist:
+        raise HTTPException(status_code=409, detail="the ip_address already registered")
+
     session.add(ip)
     session.commit()
     session.refresh(ip)
@@ -78,12 +83,12 @@ def create_ip_address(ip: IPAddress, session: SessionDep):
 
 
 @app.put("/api/ip-addresses", response_model=IPAddress)
-def change_ip_address(ip_update: IPAddress, session: SessionDep):
-    statement = select(IPAddress).where(IPAddress.ip == ip_update.ip)
-    ip = session.exec(statement).one()
-    if not ip:
+def change_ip_address(ip: IPAddress, session: SessionDep):
+    statement = select(IPAddress).where(IPAddress.ip == ip.ip)
+    ip_exist = session.exec(statement).all()
+    if not ip_exist:
         raise HTTPException(status_code=404, detail="ip_address not found")
-    update_ip(ip, ip_update)
+    update_ip(ip_exist[0], ip)
     session.add(ip)
     session.commit()
     session.refresh(ip)
