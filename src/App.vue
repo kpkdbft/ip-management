@@ -18,3 +18,4 @@ export default {
 <style>
 /* グローバルスタイルをここに追加 */
 </style>
+
