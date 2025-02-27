@@ -9,20 +9,23 @@
   },
   "dependencies": {
     "@mdi/font": "5.9.55",
+    "@vue/cli": "^5.0.8",
     "core-js": "^3.8.3",
+    "n": "^10.1.0",
     "roboto-fontface": "*",
     "vue": "^3.2.13",
     "vuetify": "^3.0.0-beta.0",
     "webfontloader": "^1.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.16",
-    "@babel/eslint-parser": "^7.12.16",
+    "@babel/core": "^7.26.0",
+    "@babel/eslint-parser": "^7.25.9",
+    "@babel/preset-env": "^7.26.0",
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-eslint": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
-    "eslint": "^7.32.0",
-    "eslint-plugin-vue": "^8.0.3",
+    "eslint": "^8.57.1",
+    "eslint-plugin-vue": "^9.32.0",
     "vue-cli-plugin-vuetify": "~2.5.8",
     "webpack-plugin-vuetify": "^2.0.0-alpha.0"
   },
