@@ -89,9 +89,9 @@ def change_ip_address(ip: IPAddress, session: SessionDep):
     if not ip_exist:
         raise HTTPException(status_code=404, detail="ip_address not found")
     update_ip(ip_exist[0], ip)
-    session.add(ip)
+    session.add(ip_exist[0])
     session.commit()
-    session.refresh(ip)
+    session.refresh(ip_exist[0])
     return ip
 
 
